@@ -1,0 +1,32 @@
+import pygame
+
+def draw_mesh(screen, current_map, enemy):
+    # Draw walls
+    for w in current_map.walls:
+        pygame.draw.rect(screen, (255, 0, 0), w)
+
+    # Draw mesh grid
+    mesh_width, mesh_height = current_map.nav_mesh.width, current_map.nav_mesh.height
+    density = current_map.nav_mesh.density
+    for i in range(mesh_width):
+        for j in range(mesh_height):
+            eps = current_map.nav_mesh.edge_tolerance
+            r = pygame.Rect(i * density, j * density, density, density)
+            r_inf = pygame.Rect(i * density-eps, j * density-eps, density+2*eps, density+2*eps)
+            # Check collision
+            collides = r_inf.collidelist(current_map.walls) != -1
+            color = (255, 50, 50) if collides else (50, 255, 50)
+            pygame.draw.rect(screen, color, r, 1)
+
+    path = enemy.current_path
+    if path:
+        for k in range(len(path) - 1):
+            p1 = path[k]
+            p2 = path[k + 1]
+            pygame.draw.line(
+                screen,
+                (0, 150, 255),
+                (p1[0] + density // 2, p1[1] + density // 2),
+                (p2[0] + density // 2, p2[1] + density // 2),
+                3
+            )
