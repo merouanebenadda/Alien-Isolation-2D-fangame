@@ -6,7 +6,7 @@ import os
 import math
 import pickle
 
-DENSITY = 17
+DENSITY = 25
 
 class MapLoader():
     def __init__(self, current_map):
@@ -56,7 +56,7 @@ class MapLoader():
         density = self.nav_mesh.density
         for i in range(mesh_width):
             for j in range(mesh_height):
-                eps = self.nav_mesh.edge_tolerance//2
+                eps = self.nav_mesh.edge_tolerance
                 r = pygame.Rect(i * density, j * density, density, density)
                 r_inf = pygame.Rect(i * density-eps, j * density-eps, density+2*eps, density+2*eps)
                 if r_inf.collidelist(self.walls) != -1:
@@ -66,7 +66,7 @@ class MapLoader():
     
     def resolve_collision_x(self, entity, dx):
         if isinstance(entity, Enemy):
-            walls = self.nav_mesh_walls
+            walls = self.walls
 
         if isinstance(entity, Player):
             walls = self.walls
@@ -82,7 +82,7 @@ class MapLoader():
 
     def resolve_collision_y(self, entity, dy):
         if isinstance(entity, Enemy):
-            walls = self.nav_mesh_walls
+            walls = self.walls
 
         if isinstance(entity, Player):
             walls = self.walls

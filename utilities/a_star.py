@@ -61,4 +61,4 @@ def A_star(start, goal, mesh):
                 if g_score[(i, j)] < inf:
                     heapq.heappush(open_set, (f_score[(i, j)], (i, j)))
 
-    raise ValueError("A_star failed to find a path")
+    return None

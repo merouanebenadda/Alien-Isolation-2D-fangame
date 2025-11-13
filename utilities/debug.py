@@ -26,7 +26,7 @@ def draw_mesh(screen, current_map, enemy):
             pygame.draw.line(
                 screen,
                 (0, 150, 255),
-                (p1[0] + density // 2, p1[1] + density // 2),
-                (p2[0] + density // 2, p2[1] + density // 2),
+                (p1[0], p1[1]),
+                (p2[0], p2[1]),
                 3
             )

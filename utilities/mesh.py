@@ -1,4 +1,5 @@
 from .a_star import A_star
+import pygame
 
 class Mesh():
     def __init__(self, size, width, height, density, edge_tolerance):
@@ -27,12 +28,69 @@ class Mesh():
         return (i, j)
     
     def position(self, i, j):
+        """
+        Returns the center of the tile of indices (i, j)
+        """
         density = self.density
-        return (density*i, density*j)
+        return (density*i + density//2, density*j + density//2)
+    
+    def closest_accessible_tile(self, i, j=None):
+        """
+        Return the nearest tile (i,j) with a non-empty adjacency list within Manhattan distance <= 2.
+        Stop searching further along any direction as soon as a wall (tile with empty/no adjacency) is encountered.
+        Accepts either closest_accessible_tile((i, j)) or closest_accessible_tile(i, j).
+        """
+        if j is None and isinstance(i, tuple):
+            i, j = i
+
+        # If the current tile is already accessible, return it.
+        if self.adjacency_map.get((i, j)):
+            return (i, j)
+
+        max_dist = 2
+        # 8 directions (cardinal + diagonals)
+        directions = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)]
+        blocked_dirs = set()
+
+        # Check increasing distance; for each direction stop that ray when a wall is hit.
+        for step in range(1, max_dist + 1):
+            for idx, (dx, dy) in enumerate(directions):
+                if idx in blocked_dirs:
+                    continue
+
+                ni = i + dx * step
+                nj = j + dy * step
+
+                if not (0 <= ni < self.width and 0 <= nj < self.height):
+                    # Out of bounds acts like a wall for this direction.
+                    blocked_dirs.add(idx)
+                    continue
+
+                neighbors = self.adjacency_map.get((ni, nj))
+                if neighbors == None: # means neighbor contains a wall. Hit a wall: stop exploring further along this direction.
+                    blocked_dirs.add(idx)
+                elif neighbors:
+                    return (ni, nj)
+                    
+
+        return None
+        
+
 
     def compute_path(self, entity1, entity2):
-        path = A_star(self.nearest_node(entity1), self.nearest_node(entity2), self)
+        start = self.nearest_node(entity1)
+        end = self.nearest_node(entity2)
+        is_on_unaccessible_tile = False
+
+        if not self.adjacency_map[start]:
+            is_on_unaccessible_tile = True
+            start = self.closest_accessible_tile(start)
+
+        if not self.adjacency_map[end]:
+            end = self.closest_accessible_tile(end)
+
+        path = A_star(start, end, self)
         if path != None: 
-            return list(map(lambda node: self.position(node[0], node[1]), path))
+            return is_on_unaccessible_tile, list(map(lambda node: self.position(node[0], node[1]), path))
         else:
-            return None
+            return is_on_unaccessible_tile, None
