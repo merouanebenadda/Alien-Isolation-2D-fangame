@@ -1,6 +1,8 @@
 from .entity import Entity
+from numpy import arctan2
 import pygame
 import math
+
 
 class Player(Entity):
     def __init__(self, x, y=None):
@@ -19,7 +21,37 @@ class Player(Entity):
         self.rect = self.texture.get_rect()
         self.rect.center = (x, y)
 
-    def move(self, is_pressed, current_map, dt):
+        CROSSHAIR_SIZE = (7, 7)
+        self.crosshair_x_pos = x
+        self.crosshair_y_pos = y
+        crosshair_surface = pygame.image.load('textures/player/crosshair.png')
+        self.crosshair_texture = pygame.transform.scale(crosshair_surface, CROSSHAIR_SIZE)
+        self.crosshair_rect = self.crosshair_texture.get_rect()
+        self.crosshair_rect.center = (x, y)
+
+        # This idea fucking sucks
+        # self.VISION_CONE_SIZE = (100, 100)
+        # #271, 0
+        # self.vision_cone_surface = pygame.image.load('textures/player/vision_cone.png')
+        # self.vision_cone_texture = pygame.transform.scale(self.vision_cone_surface, self.VISION_CONE_SIZE)
+        # self.vision_cone_rect = self.vision_cone_texture.get_rect()
+        # self.vision_cone_rect.bottomleft = (x, y)
+
+    # def update_vision_cone(self, mouse_pos):
+    #     base_angle = 30 # the angle of vision is 60°, so we don't rotate if angle = base_angle
+
+    #     x_m, y_m = mouse_pos
+    #     x, y = self.x_pos, self.y_pos
+
+    #     angle = arctan2(y_m-y, x_m-x)*180/math.pi-90
+
+    #     self.vision_cone_texture = pygame.transform.rotate(self.vision_cone_surface, -angle)
+    #     self.vision_cone_texture = pygame.transform.scale(self.vision_cone_surface, self.VISION_CONE_SIZE)
+    #     self.vision_cone_rect = self.vision_cone_texture.get_rect(bottomleft=self.vision_cone_rect.bottomleft)
+    #     self.vision_cone_rect.bottomleft = (x, y)
+        
+
+    def update(self, is_pressed, current_map, dt):
         old_x = self.x_pos
         old_y = self.y_pos
 
@@ -28,6 +60,12 @@ class Player(Entity):
 
         self.current_speed = self.base_speed
 
+        mouse_pos =  pygame.mouse.get_pos()
+        self.crosshair_x_pos, self.crosshair_y_pos = mouse_pos
+        self.crosshair_rect.center = mouse_pos
+
+        #self.update_vision_cone(mouse_pos, current_map)
+
         if is_pressed[pygame.K_LSHIFT] and self.stamina > 0:
             self.current_speed = self.sprint_speed
             self.stamina = max(self.stamina - 3, 0)
@@ -35,16 +73,16 @@ class Player(Entity):
         if not is_pressed[pygame.K_LSHIFT] and self.stamina < self.MAX_STAMINA:
             self.stamina = min(self.stamina + 1, 300)
 
-        if is_pressed[pygame.K_UP]:
+        if is_pressed[pygame.K_UP] or is_pressed[pygame.K_z]:
             movement_vector_y -= self.current_speed
         
-        if is_pressed[pygame.K_DOWN]:
+        if is_pressed[pygame.K_DOWN] or is_pressed[pygame.K_s]:
             movement_vector_y += self.current_speed
         
-        if is_pressed[pygame.K_RIGHT]:
+        if is_pressed[pygame.K_RIGHT] or is_pressed[pygame.K_d]:
             movement_vector_x += self.current_speed
         
-        if is_pressed[pygame.K_LEFT]:
+        if is_pressed[pygame.K_LEFT] or is_pressed[pygame.K_q]:
             movement_vector_x -= self.current_speed
             
         norm = math.sqrt(movement_vector_x**2 + movement_vector_y**2)

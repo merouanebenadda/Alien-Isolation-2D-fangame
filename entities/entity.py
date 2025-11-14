@@ -1,6 +1,8 @@
 import pygame
 import math
-from utilities.geometry import intersects
+from utilities.geometry import intersects, angle
+from numpy import cos, sin
+import bisect
 
 class Entity(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -80,7 +82,7 @@ class Entity(pygame.sprite.Sprite):
                 if intersects(ray, edge):
                     return False
                 
-        return 
+        return True
 
     def can_go_to_point(self, point, current_map):
         ray = (self.rect.center, point)
@@ -124,3 +126,46 @@ class Entity(pygame.sprite.Sprite):
 
                 self.x_pos, self.y_pos = self.rect.center
 
+    def furthest_point_in_direction(self, angle, current_map):
+        x = self.x_pos
+        y = self.y_pos
+        
+        step = 5
+        detector = pygame.Rect(0, 0, 1, 1)
+
+        while detector.collidelist(current_map.walls) == -1:
+            x += step*cos(angle*math.pi/180)
+            y += step*sin(angle*math.pi/180)
+            detector.center = x, y
+
+        return x, y
+
+    def cast_rays(self, orientation, vision_angle, current_map):
+        """
+        Casts ray in an angle, and returns a list of triangles formed by the player and successive corners
+        """
+
+        pos = self.x_pos, self.y_pos
+        corner_angles = []
+        triangles_list = []
+
+        eps = 0.5
+
+        for wall in current_map.wall_corners.keys():
+            corners = current_map.wall_corners[wall]
+
+            for corner in corners:
+                if self.can_see_point(corner, current_map):
+                    vision_angle = angle(pos, corner), corner
+                    bisect.insort_left(corner_angles, vision_angle)
+
+                    for secondary_angle in [vision_angle[0] - eps, vision_angle[0] + eps]:
+                        secondary_angle = secondary_angle, self.furthest_point_in_direction(secondary_angle, current_map)
+                        bisect.insort_left(corner_angles, secondary_angle)
+
+        
+        n = len(corner_angles)
+        for i in range(n):
+            triangles_list.append((pos, corner_angles[i][1], corner_angles[(i+1)%n][1])) # i%n so the last triangle that loops back is included
+
+        return triangles_list

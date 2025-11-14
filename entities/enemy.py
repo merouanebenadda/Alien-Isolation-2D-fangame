@@ -59,7 +59,6 @@ class Enemy(Entity):
             return None
 
     def follow_path(self, current_map, dt):
-        #corner_tolerance = 0
         corner_tolerance = current_map.nav_mesh.density*2*math.sqrt(2) # allows the enemy to cur corners if next way point is under this distance
 
         if not self.current_path and geometry.euclidian_distance((self.x_pos, self.y_pos), self.next_position) < self.ENEMY_SIZE[0]//2:

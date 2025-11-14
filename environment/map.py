@@ -20,6 +20,7 @@ class Map():
         density, edge_tolerance = self.parse_settings()
         self.nav_mesh = self.generate_nav_mesh(density, edge_tolerance)
         self.nav_mesh_walls = self.generate_nav_mesh_walls()
+        self.wall_corners = self.init_wall_corners()
 
  
     def parse_walls(self):
@@ -36,6 +37,43 @@ class Map():
                 except ValueError:
                     print(f"Error parsing line : {line}")
                     continue
+
+    def init_wall_corners(self):
+        wall_corners = {wall: [] for wall in self.walls}
+
+        # 1. Add real rectangle corners
+        for wall in self.walls:
+            r = wall.rect
+            wall_corners[wall].extend([
+                r.topleft, r.topright, r.bottomleft, r.bottomright
+            ])
+
+        # Helper: rectangle intersection (pygame doesn't give its rect)
+        def rect_intersection(r1, r2):
+            x1 = max(r1.left,   r2.left)
+            y1 = max(r1.top,    r2.top)
+            x2 = min(r1.right,  r2.right)
+            y2 = min(r1.bottom, r2.bottom)
+            if x1 < x2 and y1 < y2:
+                return pygame.Rect(x1, y1, x2 - x1, y2 - y1)
+            return None
+
+        # 2. Add corners of intersection rectangles between any overlapping walls
+        for i, A in enumerate(self.walls):
+            rA = A.rect
+            for B in self.walls[i+1:]:
+                rB = B.rect
+
+                if rA.colliderect(rB):
+                    inter = rect_intersection(rA, rB)
+                    if inter:  # intersection has positive area
+                        for pt in [inter.topleft, inter.topright, inter.bottomleft, inter.bottomright]:
+                            if pt not in wall_corners[A]:
+                                wall_corners[A].append(pt)
+                            if pt not in wall_corners[B]:
+                                wall_corners[B].append(pt)
+
+        return wall_corners
 
     def parse_settings(self):
         with open(f"maps/{self.name}/settings.txt") as file:

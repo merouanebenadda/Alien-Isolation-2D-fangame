@@ -1,3 +1,4 @@
+from numpy import arctan2
 import math
 
 def is_parallel(p1, p2, q1, q2):
@@ -10,6 +11,8 @@ def is_parallel(p1, p2, q1, q2):
     return abs((a2-a1)*(y2-y1) - (x2-x1)*(b2-b1)) < 1e-6
 
 def intersects(s1, s2):
+    eps = 1e-6
+
     p1, p2 = s1
     q1, q2 = s2
 
@@ -28,7 +31,7 @@ def intersects(s1, s2):
     t_p =  ((y2-b2)*(a1-a2) + (a2-x2)*(b1-b2)) / denominator
     t_q = -((b2-y2)*(x1-x2) + (x2-a2)*(y1-y2)) / denominator
 
-    if 0 <= t_p <= 1 and 0 <= t_q <= 1:
+    if eps <= t_p <= 1-eps and eps <= t_q <= 1-eps:
         return True
     
     else:
@@ -45,3 +48,9 @@ def euclidian_distance_entities(entity1, entity2):
     x2, y2 = entity2.x_pos, entity2.y_pos
 
     return math.sqrt((x1-x2)**2+(y1-y2)**2)
+
+def angle(pos1, pos2):
+    x1, y1 = pos1
+    x2, y2 = pos2
+
+    return arctan2(y2-y1, x2-x1)*180/math.pi
